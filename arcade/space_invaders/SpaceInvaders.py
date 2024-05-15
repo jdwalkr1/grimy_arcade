@@ -41,6 +41,10 @@ class SpaceInvaders:
         self.score = 0
         self.font = pygame.font.SysFont(None, 35)
 
+        # Explosion
+
+        self.explosion_sound = pygame.mixer.Sound('arcade/space_invaders/sounds/small-explosion-129477.mp3')
+
     # Functions
     def set_level(self):
         if self.score < 20:
@@ -93,6 +97,7 @@ class SpaceInvaders:
         for bullet_pos in self.bullet_list:
             for enemy_pos in self.enemy_list:
                 if self.detect_collision(bullet_pos, enemy_pos):
+                    self.explosion_sound.play()
                     self.bullet_list.remove(bullet_pos)
                     self.enemy_list.remove(enemy_pos)
                     self.score += 1
