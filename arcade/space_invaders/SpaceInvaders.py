@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+from Player import Player
 
 class SpaceInvaders:
     def __init__(self):
@@ -17,22 +18,18 @@ class SpaceInvaders:
         self.BLACK = (0, 0, 0)
 
         # Player
-        self.player_size = 50
-        self.player_img = pygame.image.load('arcade/space_invaders/pngs/player.png')
-        self.player_img = pygame.transform.scale(self.player_img, (self.player_size, self.player_size))
-        self.player_pos = [self.WIDTH/2, self.HEIGHT - 2 * self.player_size]
-        self.player_speed = 5
+        self.player = Player(self.WIDTH, self.HEIGHT)
 
         # Enemy
         self.enemy_size = 50
-        self.enemy_img = pygame.image.load('arcade/space_invaders/pngs/enemy.png')
+        self.enemy_img = pygame.image.load('pngs/enemy.png')
         self.enemy_img = pygame.transform.scale(self.enemy_img, (self.enemy_size, self.enemy_size))
         self.enemy_list = []
         self.enemy_speed = 2
 
         # Bullet
         self.bullet_size = 10
-        self.bullet_img = pygame.image.load('arcade/space_invaders/pngs/bullet.png')
+        self.bullet_img = pygame.image.load('pngs/bullet.png')
         self.bullet_img = pygame.transform.scale(self.bullet_img, (self.bullet_size, self.bullet_size))
         self.bullet_list = []
         self.bullet_speed = 5
@@ -42,8 +39,7 @@ class SpaceInvaders:
         self.font = pygame.font.SysFont(None, 35)
 
         # Explosion
-
-        self.explosion_sound = pygame.mixer.Sound('arcade/space_invaders/sounds/small-explosion-129477.mp3')
+        self.explosion_sound = pygame.mixer.Sound('sounds/small-explosion-129477.mp3')
 
     # Functions
     def set_level(self):
@@ -76,27 +72,22 @@ class SpaceInvaders:
                 self.score += 1
 
     def collision_check(self):
+        player_rect = pygame.Rect(self.player.rect.x, self.player.rect.y, self.player.size, self.player.size)
         for enemy_pos in self.enemy_list:
-            if self.detect_collision(enemy_pos, self.player_pos):
+            enemy_rect = pygame.Rect(enemy_pos[0], enemy_pos[1], self.enemy_size, self.enemy_size)
+            if self.detect_collision(player_rect, enemy_rect):
                 return True
         return False
 
-    def detect_collision(self, player_pos, enemy_pos):
-        p_x = player_pos[0]
-        p_y = player_pos[1]
-
-        e_x = enemy_pos[0]
-        e_y = enemy_pos[1]
-
-        if (e_x >= p_x and e_x < (p_x + self.player_size)) or (p_x >= e_x and p_x < (e_x + self.enemy_size)):
-            if (e_y >= p_y and e_y < (p_y + self.player_size)) or (p_y >= e_y and p_y < (e_y + self.enemy_size)):
-                return True
-        return False
+    def detect_collision(self, rect1, rect2):
+        return rect1.colliderect(rect2)
 
     def bullet_hit(self):
         for bullet_pos in self.bullet_list:
+            bullet_rect = pygame.Rect(bullet_pos[0], bullet_pos[1], self.bullet_size, self.bullet_size)
             for enemy_pos in self.enemy_list:
-                if self.detect_collision(bullet_pos, enemy_pos):
+                enemy_rect = pygame.Rect(enemy_pos[0], enemy_pos[1], self.enemy_size, self.enemy_size)
+                if self.detect_collision(bullet_rect, enemy_rect):
                     self.explosion_sound.play()
                     self.bullet_list.remove(bullet_pos)
                     self.enemy_list.remove(enemy_pos)
@@ -111,21 +102,18 @@ class SpaceInvaders:
                 if event.type == pygame.QUIT:
                     sys.exit()
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        self.player_pos[0] -= self.player_speed
-                    elif event.key == pygame.K_RIGHT:
-                        self.player_pos[0] += self.player_speed
-                    elif event.key == pygame.K_SPACE:
-                        bullet_pos = [self.player_pos[0] + self.player_size/2, self.player_pos[1]]
+                    if event.key == pygame.K_SPACE:
+                        bullet_pos = [self.player.rect.x + self.player.size / 2, self.player.rect.y]
                         self.bullet_list.append(bullet_pos)
+
+            self.player.update()  # Update player position
 
             self.screen.fill(self.BLACK)
 
             # Update position of bullets
             for bullet_pos in self.bullet_list:
-                if bullet_pos[1] > 0:
-                    bullet_pos[1] -= self.bullet_speed
-                else:
+                bullet_pos[1] -= self.bullet_speed
+                if bullet_pos[1] < 0:
                     self.bullet_list.remove(bullet_pos)
 
             # Update enemy positions
@@ -136,7 +124,7 @@ class SpaceInvaders:
 
             text = "Score: " + str(self.score)
             label = self.font.render(text, 1, self.WHITE)
-            self.screen.blit(label, (self.WIDTH-200, self.HEIGHT-40))
+            self.screen.blit(label, (self.WIDTH - 200, self.HEIGHT - 40))
 
             if self.collision_check():
                 game_over = True
@@ -145,11 +133,13 @@ class SpaceInvaders:
             self.draw_enemies()
 
             # Draw player
-            self.screen.blit(self.player_img, self.player_pos)
+            self.screen.blit(self.player.image, self.player.rect)
 
             # Draw bullets
             for bullet_pos in self.bullet_list:
                 self.screen.blit(self.bullet_img, bullet_pos)
 
-            clock.tick(30)
             pygame.display.update()
+            clock.tick(30)
+
+
