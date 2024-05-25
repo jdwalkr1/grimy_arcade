@@ -137,9 +137,19 @@ class SpaceInvaders:
                     elif event.key == pygame.K_n:
                         return False  # Quit game
 
-    def reset_game(self):
+    '''def reset_game(self):
         # Reset all game variables to their initial state
         self.player.reset()
+        self.enemy_list.clear()
+        self.bullet_list.clear()
+        self.score = 0'''
+
+
+    def reset_game(self):
+        # Reset all game variables to their initial state
+        self.player.rect.x = self.WIDTH // 2
+        self.player.rect.y = self.HEIGHT - self.player.size - 10
+        self.player.lives = 1
         self.enemy_list.clear()
         self.bullet_list.clear()
         self.score = 0
@@ -162,7 +172,8 @@ class SpaceInvaders:
             self.screen.fill(self.BLACK)
 
             # Draw player
-            self.screen.blit(self.player.image, self.player.rect)
+            self.player.toggle_blink()  # Toggle blinking
+            self.player.draw(self.screen)
 
             # Draw bullets
             for bullet_pos in self.bullet_list:
@@ -198,15 +209,6 @@ class SpaceInvaders:
 
             pygame.display.update()
             clock.tick(60)
-
-    def reset_game(self):
-        # Reset all game variables to their initial state
-        self.player.rect.x = self.WIDTH // 2
-        self.player.rect.y = self.HEIGHT - self.player.size - 10
-        self.player.lives = 1
-        self.enemy_list.clear()
-        self.bullet_list.clear()
-        self.score = 0
 
     def run(self):
         while True:  # Main game loop
