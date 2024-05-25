@@ -52,3 +52,7 @@ class Player(pygame.sprite.Sprite):
             pass
         else:
             self.make_invincible(100)  # Player is invincible for 100 frames after losing a life
+
+    def toggle_blink(self):
+        self.blink_timer += 1
+
