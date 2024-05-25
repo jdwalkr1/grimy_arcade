@@ -76,11 +76,13 @@ class SpaceInvaders:
         for enemy_pos in self.enemy_list:
             enemy_rect = pygame.Rect(enemy_pos[0], enemy_pos[1], self.enemy_size, self.enemy_size)
             if self.detect_collision(player_rect, enemy_rect):
+                print("Collision detected!")  # Debugging
                 if self.player.state == "normal":
                     self.player.lose_life()
                     self.enemy_list.remove(enemy_pos)
                     if self.player.lives <= 0:
-                        return True
+                        print("Player out of lives!")  # Debugging
+                        return True  # Return True if player runs out of lives
                 elif self.player.state == "invincible":
                     self.enemy_list.remove(enemy_pos)
         return False
@@ -109,13 +111,48 @@ class SpaceInvaders:
                 self.player.gain_life()
                 self.extra_life_granted[threshold] = True
 
-    def run(self):
+    def display_game_over(self):
+        self.screen.fill(self.BLACK)  # Clear the screen
+        game_over_text = "Game Over"
+        game_over_label = self.font.render(game_over_text, 1, self.WHITE)
+        self.screen.blit(game_over_label, (self.WIDTH / 2 - game_over_label.get_width() / 2, self.HEIGHT / 2))
+
+        # Prompt to play again
+        prompt_text = "Play Again? (Y/N)"
+        prompt_label = self.font.render(prompt_text, 1, self.WHITE)
+        self.screen.blit(prompt_label, (self.WIDTH / 2 - prompt_label.get_width() / 2, self.HEIGHT / 2 + 50))
+
+        pygame.display.update()
+
+        # Wait for input
+        while True:
+            for event in pygame.event.get():
+
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_y:
+                        return True  # Play again
+                    elif event.key == pygame.K_n:
+                        return False  # Quit game
+
+    def reset_game(self):
+        # Reset all game variables to their initial state
+        self.player.reset()
+        self.enemy_list.clear()
+        self.bullet_list.clear()
+        self.score = 0
+
+    def play_game(self):
+        # Game loop
         game_over = False
         clock = pygame.time.Clock()
 
         while not game_over:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    pygame.quit()
                     sys.exit()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
@@ -123,6 +160,16 @@ class SpaceInvaders:
                         self.bullet_list.append(bullet_pos)
 
             self.screen.fill(self.BLACK)
+
+            # Draw player
+            self.screen.blit(self.player.image, self.player.rect)
+
+            # Draw bullets
+            for bullet_pos in self.bullet_list:
+                self.screen.blit(self.bullet_img, bullet_pos)
+
+            # Draw enemies
+            self.draw_enemies()
 
             self.player_group.update()
 
@@ -147,18 +194,36 @@ class SpaceInvaders:
             self.screen.blit(lives_label, (10, self.HEIGHT - 40))
 
             if self.collision_check():
-                game_over = True
-                break
+                game_over = True  # Set game_over to True if collision occurs
 
-            self.draw_enemies()
-
-            # Draw player using the new draw method
-            self.player.draw(self.screen)
-
-            for bullet_pos in self.bullet_list:
-                self.screen.blit(self.bullet_img, bullet_pos)
-
-            clock.tick(30)
             pygame.display.update()
+            clock.tick(60)
+
+    def reset_game(self):
+        # Reset all game variables to their initial state
+        self.player.rect.x = self.WIDTH // 2
+        self.player.rect.y = self.HEIGHT - self.player.size - 10
+        self.player.lives = 1
+        self.enemy_list.clear()
+        self.bullet_list.clear()
+        self.score = 0
+
+    def run(self):
+        while True:  # Main game loop
+            self.reset_game()  # Reset the game state
+            self.play_game()  # Start the game
+
+            # Game over screen
+            while True:
+                restart = self.display_game_over()  # Display game over screen and get player's choice
+                if not restart:  # If player chooses not to restart
+                    pygame.quit()
+                    sys.exit()
+
+                # Reset the game state if the player chooses to play again
+                self.reset_game()
+                break  # Break out of the game over loop to restart the game
+
+
 
 
